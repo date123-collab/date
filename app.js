@@ -1,6 +1,7 @@
 (() => {
   const CFG = window.DATE_MAP_CONFIG || {
     whatsapp: "381692774424",
+    ntfyTopic: "ksada-date-loznica-069",
     mapCenter: [44.5331, 19.2256],
     mapZoom: 14,
   };
@@ -34,8 +35,10 @@
       itsADate: "DOGOVORENO!",
       activityLabel: "Aktivnost",
       placeLabel: "Mesto",
-      sentNote: "Pošalji mu odgovor na WhatsApp ↓",
-      sendWa: "Pošalji na WhatsApp",
+      sentNote: "Poslato njemu ✓ — WhatsApp samo ako želiš",
+      sendWa: "Pošalji i na WhatsApp",
+      notified: "Stiglo njemu ✓",
+      notifyFail: "Sačuvano. Ako inbox ne radi, otvori odgovore 👁",
       needWhen: "Izaberi datum i vreme 💕",
       needActivity: "Izaberi aktivnost 💕",
       needPlace: "Izaberi mesto na mapi 💕",
@@ -77,8 +80,10 @@
       itsADate: "IT'S A DATE!",
       activityLabel: "Activity",
       placeLabel: "Place",
-      sentNote: "Send him the answer on WhatsApp ↓",
-      sendWa: "Send on WhatsApp",
+      sentNote: "Sent to him ✓ — WhatsApp only if you want",
+      sendWa: "Also send on WhatsApp",
+      notified: "Delivered to him ✓",
+      notifyFail: "Saved. If inbox fails, open answers 👁",
       needWhen: "Pick date and time 💕",
       needActivity: "Pick an activity 💕",
       needPlace: "Pick a place on the map 💕",
@@ -105,7 +110,6 @@
     marker: null,
     doneMap: null,
     mapReady: false,
-    waUrl: "",
   };
 
   const $ = (s, r = document) => r.querySelector(s);
@@ -193,7 +197,7 @@
     clearTimeout(toastMsg._t);
     toastMsg._t = setTimeout(() => {
       toast.hidden = true;
-    }, 2200);
+    }, 2400);
   }
 
   function burst(x, y, n = 16) {
@@ -326,6 +330,14 @@
     return `https://www.google.com/maps?q=${place.lat},${place.lng}`;
   }
 
+  function encodePayload(payload) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  }
+
+  function resultsUrl(payload) {
+    return new URL(`rezultati.html#r=${encodePayload(payload)}`, location.href).href;
+  }
+
   function buildWaUrl(payload) {
     const phone = String(CFG.whatsapp || "381692774424").replace(/\D/g, "");
     const text = [
@@ -335,10 +347,46 @@
       `Aktivnost: ${payload.activity}`,
       `Mesto: ${payload.place?.name || "—"}`,
       payload.place ? `Mapa: ${mapsLink(payload.place)}` : "",
+      `Detalji: ${resultsUrl(payload)}`,
     ]
       .filter(Boolean)
       .join("\n");
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  }
+
+  function saveLocal(payload) {
+    const key = "ksada-date-map-results";
+    const list = JSON.parse(localStorage.getItem(key) || "[]");
+    list.unshift(payload);
+    localStorage.setItem(key, JSON.stringify(list.slice(0, 30)));
+  }
+
+  async function notifyInbox(payload) {
+    const topic = CFG.ntfyTopic;
+    if (!topic) return false;
+    const detailLink = resultsUrl(payload);
+    const body = [
+      `Datum: ${formatDate(payload.date)}`,
+      `Vreme: ${payload.time}`,
+      `Aktivnost: ${payload.activity}`,
+      `Mesto: ${payload.place?.name || "—"}`,
+      payload.place ? `Maps: ${mapsLink(payload.place)}` : "",
+      `Link: ${detailLink}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const res = await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
+      method: "POST",
+      headers: {
+        Title: "Dogovoreno! 💘",
+        Priority: "high",
+        Tags: "heart,date",
+        Click: detailLink,
+      },
+      body,
+    });
+    return res.ok;
   }
 
   function fillSummary(payload) {
@@ -347,8 +395,8 @@
     $("#summaryActivity").textContent = payload.activity;
     $("#summaryPlace").textContent = payload.place?.name || "—";
 
-    state.waUrl = buildWaUrl(payload);
-    waBtn.href = state.waUrl;
+    waBtn.hidden = false;
+    waBtn.href = buildWaUrl(payload);
 
     const el = $("#doneMap");
     el.innerHTML = "";
@@ -370,24 +418,30 @@
     }
   }
 
-  function finalize(e) {
+  async function finalize(e) {
     if (!state.place) {
       alert(t().needPlace);
       return;
     }
     const payload = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
       date: state.date,
       time: state.time,
       activity: activityLabel(),
       place: state.place,
     };
+    saveLocal(payload);
     fillSummary(payload);
     burst(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, 22);
     showScreen("done");
-    // Otvori WhatsApp sa porukom ka tvom broju
-    setTimeout(() => {
-      window.open(state.waUrl, "_blank");
-    }, 450);
+
+    try {
+      const ok = await notifyInbox(payload);
+      toastMsg(ok ? t().notified : t().notifyFail);
+    } catch {
+      toastMsg(t().notifyFail);
+    }
   }
 
   langToggle.addEventListener("click", () => {

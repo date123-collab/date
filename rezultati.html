@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odgovori</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="results-page">
+  <div class="sky" aria-hidden="true">
+    <div class="aurora"></div>
+    <div class="checker"></div>
+    <div class="clouds"></div>
+    <div class="hills"></div>
+    <div class="grass"></div>
+  </div>
+
+  <div class="top-controls">
+    <a class="pill link-pill" href="index.html">←</a>
+  </div>
+
+  <main class="app">
+    <h1 class="pixel-title light">ODGOVORI</h1>
+    <p class="soft">Ovde vidiš datum, vreme, aktivnost i mesto.</p>
+
+    <div class="ntfy-box">
+      <h2>Kako ti stiže automatski</h2>
+      <p>Otvori ovaj link na telefonu (i ostavi tab / subscribe u ntfy app):</p>
+      <p style="margin-top:10px">
+        <a id="inboxLink" href="#" target="_blank" rel="noopener"></a>
+      </p>
+      <p style="margin-top:10px">Kad ona potvrdi, ovde i u tom inboxu dobijaš poruku sa svim detaljima.</p>
+    </div>
+
+    <div class="results-list" id="resultsList"></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="config.js"></script>
+  <script src="rezultati.js"></script>
+</body>
+</html>
