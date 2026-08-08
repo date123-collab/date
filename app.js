@@ -35,8 +35,8 @@
       itsADate: "DOGOVORENO!",
       activityLabel: "Aktivnost",
       placeLabel: "Mesto",
-      sentNote: "Poslato njemu ✓ — WhatsApp samo ako želiš",
-      sendWa: "Pošalji i na WhatsApp",
+      sentNote: "Poslato njemu ✓",
+      sendWa: "Pošalji i na WhatsApp (opciono)",
       notified: "Stiglo njemu ✓",
       notifyFail: "Sačuvano. Ako inbox ne radi, otvori odgovore 👁",
       needWhen: "Izaberi datum i vreme 💕",
@@ -80,8 +80,8 @@
       itsADate: "IT'S A DATE!",
       activityLabel: "Activity",
       placeLabel: "Place",
-      sentNote: "Sent to him ✓ — WhatsApp only if you want",
-      sendWa: "Also send on WhatsApp",
+      sentNote: "Sent to him ✓",
+      sendWa: "Also send on WhatsApp (optional)",
       notified: "Delivered to him ✓",
       notifyFail: "Saved. If inbox fails, open answers 👁",
       needWhen: "Pick date and time 💕",
@@ -361,11 +361,13 @@
     localStorage.setItem(key, JSON.stringify(list.slice(0, 30)));
   }
 
+  // Plain text POST only — custom headers break in browser (CORS)
   async function notifyInbox(payload) {
     const topic = CFG.ntfyTopic;
     if (!topic) return false;
     const detailLink = resultsUrl(payload);
     const body = [
+      "Dogovoreno! 💘",
       `Datum: ${formatDate(payload.date)}`,
       `Vreme: ${payload.time}`,
       `Aktivnost: ${payload.activity}`,
@@ -378,25 +380,19 @@
 
     const res = await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
       method: "POST",
-      headers: {
-        Title: "Dogovoreno! 💘",
-        Priority: "high",
-        Tags: "heart,date",
-        Click: detailLink,
-      },
       body,
     });
     return res.ok;
   }
 
+  let lastPayload = null;
+
   function fillSummary(payload) {
+    lastPayload = payload;
     $("#summaryDate").textContent = formatDate(payload.date);
     $("#summaryTime").textContent = payload.time;
     $("#summaryActivity").textContent = payload.activity;
     $("#summaryPlace").textContent = payload.place?.name || "—";
-
-    waBtn.hidden = false;
-    waBtn.href = buildWaUrl(payload);
 
     const el = $("#doneMap");
     el.innerHTML = "";
@@ -435,6 +431,7 @@
     fillSummary(payload);
     burst(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, 22);
     showScreen("done");
+    // WhatsApp se NE otvara automatski — samo dugme ako ona hoće
 
     try {
       const ok = await notifyInbox(payload);
@@ -443,6 +440,12 @@
       toastMsg(t().notifyFail);
     }
   }
+
+  waBtn.addEventListener("click", () => {
+    if (!lastPayload) return;
+    // Samo na njen klik
+    window.location.href = buildWaUrl(lastPayload);
+  });
 
   langToggle.addEventListener("click", () => {
     state.lang = state.lang === "sr" ? "en" : "sr";
