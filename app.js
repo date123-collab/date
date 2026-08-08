@@ -250,31 +250,31 @@
     }
   }
 
-  function moveNo(clientX, clientY) {
-    const pad = 16;
-    const w = noBtn.offsetWidth || 150;
-    const h = noBtn.offsetHeight || 56;
-    const vw = innerWidth;
-    const vh = innerHeight;
-    let x = clientX < vw / 2 ? vw * (0.55 + Math.random() * 0.25) : vw * (0.08 + Math.random() * 0.25);
-    let y = clientY < vh / 2 ? vh * (0.55 + Math.random() * 0.25) : vh * (0.2 + Math.random() * 0.25);
-    x = Math.max(pad, Math.min(vw - w - pad, x));
-    y = Math.max(pad + 56, Math.min(vh - h - pad, y));
-    noBtn.style.position = "fixed";
-    noBtn.style.left = `${x}px`;
-    noBtn.style.top = `${y}px`;
-    noBtn.style.right = "auto";
-    noBtn.style.bottom = "auto";
-    noBtn.style.width = "150px";
-    noBtn.style.height = "56px";
-    noBtn.style.margin = "0";
-    noBtn.style.zIndex = "30";
-    noBtn.style.visibility = "visible";
-    noBtn.style.opacity = "1";
-    noBtn.style.display = "inline-flex";
+  function punishNo() {
     state.noEscapes += 1;
+    const step = state.noEscapes;
+    const maxSteps = 5;
+
+    // Stay in place — Ne shrinks, DA grows
+    const noScale = Math.max(0.25, 1 - step * 0.15);
+    const yesScale = Math.min(1.55, 1 + step * 0.12);
+
+    noBtn.style.transform = `scale(${noScale})`;
+    noBtn.style.opacity = String(Math.max(0.35, 1 - step * 0.12));
+    yesBtn.style.transform = `scale(${yesScale})`;
+    yesBtn.style.zIndex = "2";
+
     noHint.classList.add("visible");
-    noHint.textContent = state.noEscapes >= 3 ? t().hintBroken : t().hint;
+    noHint.textContent = step >= 3 ? t().hintBroken : t().hint;
+
+    if (step >= maxSteps) {
+      noBtn.classList.add("gone");
+      noBtn.setAttribute("aria-hidden", "true");
+      noBtn.tabIndex = -1;
+      noHint.classList.remove("visible");
+      yesBtn.style.transform = "scale(1.2)";
+      document.getElementById("choiceRow")?.classList.add("only-yes");
+    }
   }
 
   function ensureMap() {
@@ -479,22 +479,21 @@
     showScreen("yay");
   });
 
-  noBtn.addEventListener("mouseenter", (e) => moveNo(e.clientX, e.clientY));
-  noBtn.addEventListener("mousemove", (e) => {
-    if (state.noEscapes) moveNo(e.clientX, e.clientY);
+  noBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (noBtn.classList.contains("gone")) return;
+    punishNo();
   });
   noBtn.addEventListener(
     "touchstart",
     (e) => {
       e.preventDefault();
-      moveNo(e.touches[0].clientX, e.touches[0].clientY);
+      if (noBtn.classList.contains("gone")) return;
+      punishNo();
     },
     { passive: false }
   );
-  noBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    moveNo(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2);
-  });
 
   continueBtn.addEventListener("click", (e) => {
     burst(e.clientX, e.clientY, 10);
