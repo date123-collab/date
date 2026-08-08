@@ -1,5 +1,5 @@
 # Date
 
-Interaktivni date-planner sajt (SR/EN) sa mapom — Loznica.
+Live: https://dobricamitrovic21610-stack.github.io/date/
 
-Pošalji joj link. Na kraju se otvara WhatsApp ka tvom broju sa datumom, vremenom, aktivnošću i mestom.
+Interaktivni date-planner (SR/EN) sa mapom — Loznica.
