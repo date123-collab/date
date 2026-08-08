@@ -173,7 +173,7 @@
       btn.addEventListener("click", () => {
         state.activityId = a.id;
         const isSurprise = a.id === "surprise";
-        surpriseBox.hidden = !isSurprise;
+        surpriseBox.classList.toggle("open", isSurprise);
         if (isSurprise) {
           activityNextBtn.disabled = !surpriseInput.value.trim();
           setTimeout(() => surpriseInput.focus(), 50);
@@ -252,8 +252,8 @@
 
   function moveNo(clientX, clientY) {
     const pad = 16;
-    const w = noBtn.offsetWidth;
-    const h = noBtn.offsetHeight;
+    const w = noBtn.offsetWidth || 150;
+    const h = noBtn.offsetHeight || 56;
     const vw = innerWidth;
     const vh = innerHeight;
     let x = clientX < vw / 2 ? vw * (0.55 + Math.random() * 0.25) : vw * (0.08 + Math.random() * 0.25);
@@ -265,7 +265,10 @@
     noBtn.style.top = `${y}px`;
     noBtn.style.right = "auto";
     noBtn.style.bottom = "auto";
+    noBtn.style.width = "150px";
+    noBtn.style.height = "56px";
     noBtn.style.margin = "0";
+    noBtn.style.zIndex = "30";
     noBtn.style.visibility = "visible";
     noBtn.style.opacity = "1";
     noBtn.style.display = "inline-flex";
