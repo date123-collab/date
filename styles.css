@@ -458,6 +458,10 @@ body {
   display: grid;
 }
 
+#surpriseMount:empty {
+  display: none;
+}
+
 .surprise-box label {
   font-family: var(--pixel);
   font-size: 8px;

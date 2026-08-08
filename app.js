@@ -129,8 +129,7 @@
   const whenNextBtn = $("#whenNextBtn");
   const activityGrid = $("#activityGrid");
   const activityNextBtn = $("#activityNextBtn");
-  const surpriseBox = $("#surpriseBox");
-  const surpriseInput = $("#surpriseInput");
+  const surpriseMount = $("#surpriseMount");
   const placeSearch = $("#placeSearch");
   const searchBtn = $("#searchBtn");
   const placeLabel = $("#placeLabel");
@@ -138,6 +137,31 @@
   const waBtn = $("#waBtn");
   const toast = $("#toast");
   const heartBurst = $("#heartBurst");
+
+  let surpriseInput = null;
+
+  function hideSurpriseField() {
+    surpriseMount.innerHTML = "";
+    surpriseInput = null;
+  }
+
+  function showSurpriseField() {
+    if (surpriseInput) return;
+    const box = document.createElement("div");
+    box.className = "surprise-box open";
+    box.innerHTML = `
+      <label for="surpriseInput">${t().surprisePhLabel}</label>
+      <input type="text" id="surpriseInput" placeholder="${t().surprisePh}" maxlength="80" autocomplete="off" />
+    `;
+    surpriseMount.appendChild(box);
+    surpriseInput = box.querySelector("#surpriseInput");
+    if (state.surpriseText) surpriseInput.value = state.surpriseText;
+    surpriseInput.addEventListener("input", () => {
+      state.surpriseText = surpriseInput.value;
+      activityNextBtn.disabled = !surpriseInput.value.trim();
+    });
+    setTimeout(() => surpriseInput.focus(), 40);
+  }
 
   function applyI18n() {
     const dict = t();
@@ -169,15 +193,17 @@
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "activity-btn" + (state.activityId === a.id ? " selected" : "");
+      btn.setAttribute("aria-pressed", state.activityId === a.id ? "true" : "false");
       btn.textContent = a.label;
       btn.addEventListener("click", () => {
+        // Samo jedna opcija odjednom (poslednja kliknuta)
         state.activityId = a.id;
-        const isSurprise = a.id === "surprise";
-        surpriseBox.classList.toggle("open", isSurprise);
-        if (isSurprise) {
-          activityNextBtn.disabled = !surpriseInput.value.trim();
-          setTimeout(() => surpriseInput.focus(), 50);
+        if (a.id === "surprise") {
+          showSurpriseField();
+          activityNextBtn.disabled = !(surpriseInput?.value || "").trim();
         } else {
+          hideSurpriseField();
+          state.surpriseText = "";
           activityNextBtn.disabled = false;
         }
         renderActivities();
@@ -526,10 +552,10 @@
       return;
     }
     if (state.activityId === "surprise") {
-      const text = surpriseInput.value.trim();
+      const text = (surpriseInput?.value || state.surpriseText || "").trim();
       if (!text) {
         alert(t().needSurprise);
-        surpriseInput.focus();
+        surpriseInput?.focus();
         return;
       }
       state.surpriseText = text;
@@ -537,12 +563,6 @@
       state.surpriseText = "";
     }
     showScreen("place");
-  });
-
-  surpriseInput.addEventListener("input", () => {
-    if (state.activityId === "surprise") {
-      activityNextBtn.disabled = !surpriseInput.value.trim();
-    }
   });
 
   searchBtn.addEventListener("click", searchPlace);
