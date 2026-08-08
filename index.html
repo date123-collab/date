@@ -22,7 +22,6 @@
   </div>
 
   <div class="top-controls">
-    <a class="pill link-pill" href="rezultati.html" title="Odgovori">👁</a>
     <button type="button" class="pill" id="langToggle">EN</button>
   </div>
 
@@ -53,13 +52,11 @@
       <h1 class="pixel-title" data-i18n="question">Hoćeš li izaći sa mnom?</h1>
       <p class="soft" data-i18n="askSub">Odaberi DA i zakažimo avanturu.</p>
       <div class="btn-row">
-        <button type="button" class="btn btn-yes" id="yesBtn">
+        <button type="button" class="btn btn-choice" id="yesBtn">
           <span data-i18n="yes">DA</span> <span class="spark">✦</span>
         </button>
-        <div class="no-wrap" id="noWrap">
-          <button type="button" class="btn btn-no" id="noBtn" data-i18n="no">Ne</button>
-          <p class="hint" id="noHint" data-i18n="hint">Nemoj ovo</p>
-        </div>
+        <button type="button" class="btn btn-choice btn-no" id="noBtn" data-i18n="no">Ne</button>
+        <p class="hint" id="noHint" data-i18n="hint">Nemoj ovo</p>
       </div>
     </section>
 
@@ -114,6 +111,10 @@
     <section class="screen" id="screen-activity">
       <h1 class="pixel-title light" data-i18n="whatDo">ŠTA ŽELIŠ DA RADIMO?</h1>
       <div class="activity-grid" id="activityGrid"></div>
+      <label class="surprise-box" id="surpriseBox" hidden>
+        <span data-i18n="surprisePhLabel">Upiši šta želiš</span>
+        <input type="text" id="surpriseInput" data-i18n-placeholder="surprisePh" placeholder="npr. muzej, sladoled..." maxlength="80" />
+      </label>
       <button type="button" class="btn btn-yes" id="activityNextBtn" disabled data-i18n="next">DALJE →</button>
     </section>
 
@@ -155,7 +156,7 @@
   <div class="heart-burst" id="heartBurst" aria-hidden="true"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="config.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

@@ -43,12 +43,13 @@
       needActivity: "Izaberi aktivnost 💕",
       needPlace: "Izaberi mesto na mapi 💕",
       searchFail: "Nisam našao to mesto. Probaj drugačije.",
+      surprisePhLabel: "Upiši šta želiš",
+      surprisePh: "npr. muzej, sladoled...",
+      needSurprise: "Upiši šta želiš za iznenađenje 💕",
       activities: [
         { id: "dinner", label: "VEČERA" },
-        { id: "movie", label: "FILMSKO VEČE" },
-        { id: "coffee", label: "KAFA I ŠETNJA" },
-        { id: "picnic", label: "PIKNIK" },
-        { id: "golf", label: "MINI GOLF" },
+        { id: "walk", label: "ŠETNJA" },
+        { id: "coffee", label: "KAFA" },
         { id: "surprise", label: "IZNENADI ME" },
       ],
     },
@@ -88,12 +89,13 @@
       needActivity: "Pick an activity 💕",
       needPlace: "Pick a place on the map 💕",
       searchFail: "Couldn't find that place. Try again.",
+      surprisePhLabel: "Type what you want",
+      surprisePh: "e.g. museum, ice cream...",
+      needSurprise: "Write your surprise idea 💕",
       activities: [
-        { id: "dinner", label: "DINNER DATE" },
-        { id: "movie", label: "MOVIE NIGHT" },
-        { id: "coffee", label: "COFFEE & WALK" },
-        { id: "picnic", label: "PICNIC" },
-        { id: "golf", label: "MINI GOLF" },
+        { id: "dinner", label: "DINNER" },
+        { id: "walk", label: "WALK" },
+        { id: "coffee", label: "COFFEE" },
         { id: "surprise", label: "SURPRISE ME" },
       ],
     },
@@ -104,6 +106,7 @@
     date: "",
     time: "19:00",
     activityId: null,
+    surpriseText: "",
     place: null,
     noEscapes: 0,
     map: null,
@@ -119,7 +122,6 @@
   const langToggle = $("#langToggle");
   const yesBtn = $("#yesBtn");
   const noBtn = $("#noBtn");
-  const noWrap = $("#noWrap");
   const noHint = $("#noHint");
   const continueBtn = $("#continueBtn");
   const dateInput = $("#dateInput");
@@ -127,6 +129,8 @@
   const whenNextBtn = $("#whenNextBtn");
   const activityGrid = $("#activityGrid");
   const activityNextBtn = $("#activityNextBtn");
+  const surpriseBox = $("#surpriseBox");
+  const surpriseInput = $("#surpriseInput");
   const placeSearch = $("#placeSearch");
   const searchBtn = $("#searchBtn");
   const placeLabel = $("#placeLabel");
@@ -157,10 +161,6 @@
   function showScreen(id) {
     $$(".screen").forEach((s) => s.classList.toggle("active", s.id === `screen-${id}`));
     if (id === "place") requestAnimationFrame(() => ensureMap());
-    if (id !== "ask") {
-      noWrap.style.cssText = "";
-      noWrap.style.position = "absolute";
-    }
   }
 
   function renderActivities() {
@@ -172,7 +172,14 @@
       btn.textContent = a.label;
       btn.addEventListener("click", () => {
         state.activityId = a.id;
-        activityNextBtn.disabled = false;
+        const isSurprise = a.id === "surprise";
+        surpriseBox.hidden = !isSurprise;
+        if (isSurprise) {
+          activityNextBtn.disabled = !surpriseInput.value.trim();
+          setTimeout(() => surpriseInput.focus(), 50);
+        } else {
+          activityNextBtn.disabled = false;
+        }
         renderActivities();
       });
       activityGrid.appendChild(btn);
@@ -180,6 +187,9 @@
   }
 
   function activityLabel() {
+    if (state.activityId === "surprise") {
+      return state.surpriseText.trim() || t().activities.find((a) => a.id === "surprise")?.label || "—";
+    }
     return t().activities.find((a) => a.id === state.activityId)?.label || "—";
   }
 
@@ -241,24 +251,27 @@
   }
 
   function moveNo(clientX, clientY) {
-    const pad = 12;
-    const w = noWrap.offsetWidth;
-    const h = noWrap.offsetHeight;
+    const pad = 16;
+    const w = noBtn.offsetWidth;
+    const h = noBtn.offsetHeight;
     const vw = innerWidth;
     const vh = innerHeight;
-    let x = clientX < vw / 2 ? vw * (0.55 + Math.random() * 0.28) : vw * (0.05 + Math.random() * 0.25);
-    let y = clientY < vh / 2 ? vh * (0.55 + Math.random() * 0.28) : vh * (0.18 + Math.random() * 0.25);
+    let x = clientX < vw / 2 ? vw * (0.55 + Math.random() * 0.25) : vw * (0.08 + Math.random() * 0.25);
+    let y = clientY < vh / 2 ? vh * (0.55 + Math.random() * 0.25) : vh * (0.2 + Math.random() * 0.25);
     x = Math.max(pad, Math.min(vw - w - pad, x));
-    y = Math.max(pad + 48, Math.min(vh - h - pad, y));
-    noWrap.style.position = "fixed";
-    noWrap.style.left = `${x}px`;
-    noWrap.style.top = `${y}px`;
-    noWrap.style.right = "auto";
-    noWrap.style.bottom = "auto";
+    y = Math.max(pad + 56, Math.min(vh - h - pad, y));
+    noBtn.style.position = "fixed";
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top = `${y}px`;
+    noBtn.style.right = "auto";
+    noBtn.style.bottom = "auto";
+    noBtn.style.margin = "0";
+    noBtn.style.visibility = "visible";
+    noBtn.style.opacity = "1";
+    noBtn.style.display = "inline-flex";
     state.noEscapes += 1;
     noHint.classList.add("visible");
     noHint.textContent = state.noEscapes >= 3 ? t().hintBroken : t().hint;
-    yesBtn.style.transform = `scale(${Math.min(1.3, 1 + state.noEscapes * 0.035)})`;
   }
 
   function ensureMap() {
@@ -431,7 +444,7 @@
     fillSummary(payload);
     burst(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, 22);
     showScreen("done");
-    // WhatsApp se NE otvara automatski — samo dugme ako ona hoće
+    // WhatsApp se NE otvara automatski — samo opciono dugme
 
     try {
       const ok = await notifyInbox(payload);
@@ -441,10 +454,16 @@
     }
   }
 
-  waBtn.addEventListener("click", () => {
+  waBtn.addEventListener("click", (e) => {
+    e.preventDefault();
     if (!lastPayload) return;
-    // Samo na njen klik
-    window.location.href = buildWaUrl(lastPayload);
+    // Samo ako ona eksplicitno klikne (opciono)
+    const url = buildWaUrl(lastPayload);
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.click();
   });
 
   langToggle.addEventListener("click", () => {
@@ -504,7 +523,24 @@
       alert(t().needActivity);
       return;
     }
+    if (state.activityId === "surprise") {
+      const text = surpriseInput.value.trim();
+      if (!text) {
+        alert(t().needSurprise);
+        surpriseInput.focus();
+        return;
+      }
+      state.surpriseText = text;
+    } else {
+      state.surpriseText = "";
+    }
     showScreen("place");
+  });
+
+  surpriseInput.addEventListener("input", () => {
+    if (state.activityId === "surprise") {
+      activityNextBtn.disabled = !surpriseInput.value.trim();
+    }
   });
 
   searchBtn.addEventListener("click", searchPlace);
